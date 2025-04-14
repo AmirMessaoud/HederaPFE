@@ -3,7 +3,7 @@ const {
   client,
   operatorAccountId,
   operatorPublicKey,
-} = require('../../server.js');
+} = require('../hederaOperator.js');
 
 const { AccountBalanceQuery, Hbar } = require('@hashgraph/sdk');
 

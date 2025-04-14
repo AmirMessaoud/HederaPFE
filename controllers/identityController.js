@@ -1,4 +1,4 @@
-const Identity = require('../../models/identityModel.js'); // Model On DATABASE
+const Identity = require('../models/identityModel.js'); // Model On DATABASE
 
 require('dotenv').config();
 
@@ -11,7 +11,7 @@ const {
   PrivateKey,
 } = require('@hashgraph/sdk');
 
-const { client } = require('../../server.js');
+const { client } = require('../server.js');
 
 // get all identities
 const getAllIdentities = async (req, res) => {
@@ -128,11 +128,34 @@ const createIdentityAndMintNFT = async (req, res) => {
   }
 };
 
-// update an identity
-const updateIdentity = async (req, res) => {};
+const updateIdentity = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    const updatedIdentity = await Identity.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
+    if (!updatedIdentity) {
+      return res.status(404).json({ error: 'Identity not found' });
+    }
+    res.status(200).json(updatedIdentity);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
 
-// delete an identity
-const deleteIdentity = async (req, res) => {};
+const deleteIdentity = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedIdentity = await Identity.findByIdAndDelete(id);
+    if (!deletedIdentity) {
+      return res.status(404).json({ error: 'Identity not found' });
+    }
+    res.status(200).json({ message: 'Identity deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
 
 module.exports = {
   createIdentityAndMintNFT,

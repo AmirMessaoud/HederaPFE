@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const Identity = require('../../models/identityModel');
+const Identity = require('../models/identityModel');
 
 const {
   AccountId,
