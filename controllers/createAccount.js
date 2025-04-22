@@ -8,65 +8,85 @@ const {
   Hbar,
 } = require('@hashgraph/sdk'); // v2.46.0
 
-async function main() {
+/**
+ * Creates a new Hedera account
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ * @returns {object} JSON response with account details
+ */
+const createAccount = async (req, res) => {
   let client;
   try {
-    // Your account ID and private key from string value
-    const MY_ACCOUNT_ID = AccountId.fromString('0.0.5829208');
+    // Your account ID and private key from string value or environment variables
+    const MY_ACCOUNT_ID = AccountId.fromString(
+      process.env.MY_ACCOUNT_ID || '0.0.5829208',
+    );
     const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA(
-      'b259583938dcb33fc2ec8d9b1385cf82ed8151e0084e1047405e5868c009cbca',
+      process.env.MY_PRIVATE_KEY ||
+        'b259583938dcb33fc2ec8d9b1385cf82ed8151e0084e1047405e5868c009cbca',
     );
 
     // Pre-configured client for test network (testnet)
     client = Client.forTestnet();
 
-    //Set the operator with the account ID and private key
+    // Set the operator with the account ID and private key
     client.setOperator(MY_ACCOUNT_ID, MY_PRIVATE_KEY);
-
-    // Start your code here
 
     // Generate a new key for the account
     const accountPrivateKey = PrivateKey.generateECDSA();
     const accountPublicKey = accountPrivateKey.publicKey;
 
+    // Optional initial balance can be specified in the request
+    const initialBalance =
+      req.body.initialBalance ?
+        new Hbar(req.body.initialBalance)
+      : new Hbar(10);
+
     const txCreateAccount = new AccountCreateTransaction()
-      .setAlias(accountPublicKey.toEvmAddress()) //Do NOT set an alias if you need to update/rotate keys
+      .setAlias(accountPublicKey.toEvmAddress()) // Do NOT set an alias if you need to update/rotate keys
       .setKey(accountPublicKey)
-      .setInitialBalance(new Hbar(10));
+      .setInitialBalance(initialBalance)
+      .freezeWith(client); // Freeze the transaction before executing
 
-    //Sign the transaction with the client operator private key and submit to a Hedera network
-    const txCreateAccountResponse = await txCreateAccount.execute(client);
+    // Sign with the client operator private key that we defined above
+    const signedTx = await txCreateAccount.sign(MY_PRIVATE_KEY);
 
-    //Request the receipt of the transaction
+    // Submit to a Hedera network
+    const txCreateAccountResponse = await signedTx.execute(client);
+
+    // Request the receipt of the transaction
     const receiptCreateAccountTx =
       await txCreateAccountResponse.getReceipt(client);
 
-    //Get the transaction consensus status
+    // Get the transaction consensus status
     const statusCreateAccountTx = receiptCreateAccountTx.status;
 
-    //Get the Account ID o
+    // Get the Account ID
     const accountId = receiptCreateAccountTx.accountId;
 
-    //Get the Transaction ID
+    // Get the Transaction ID
     const txIdAccountCreated = txCreateAccountResponse.transactionId.toString();
 
-    console.log(
-      '------------------------------ Create Account ------------------------------ ',
-    );
-    console.log('Receipt status       :', statusCreateAccountTx.toString());
-    console.log('Transaction ID       :', txIdAccountCreated);
-    console.log(
-      'Hashscan URL         :',
-      `https://hashscan.io/testnet/tx/${txIdAccountCreated}`,
-    );
-    console.log('Account ID           :', accountId.toString());
-    console.log('Private key          :', accountPrivateKey.toString());
-    console.log('Public key           :', accountPublicKey.toString());
+    // Return JSON response
+    res.status(201).json({
+      message: 'Account created successfully',
+      status: statusCreateAccountTx.toString(),
+      transactionId: txIdAccountCreated,
+      hashscanUrl: `https://hashscan.io/testnet/tx/${txIdAccountCreated}`,
+      accountId: accountId.toString(),
+      privateKey: accountPrivateKey.toString(),
+      publicKey: accountPublicKey.toString(),
+      initialBalance: initialBalance.toString(),
+    });
   } catch (error) {
-    console.error(error);
+    console.error('Error creating account:', error);
+    res.status(500).json({
+      error: error.message,
+      message: 'Failed to create account',
+    });
   } finally {
     if (client) client.close();
   }
-}
+};
 
-main();
+module.exports = { createAccount };

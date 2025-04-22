@@ -3,15 +3,15 @@ const Identity = require('../models/identityModel.js'); // Model On DATABASE
 require('dotenv').config();
 
 const {
+  AccountId,
+  PrivateKey,
+  Client,
   TokenCreateTransaction,
   TokenType,
   TokenSupplyType,
   TokenMintTransaction,
   Hbar,
-  PrivateKey,
 } = require('@hashgraph/sdk');
-
-const { client } = require('../server.js');
 
 // get all identities
 const getAllIdentities = async (req, res) => {
@@ -50,68 +50,77 @@ const createIdentityAndMintNFT = async (req, res) => {
   try {
     const { firstName, lastName } = req.body;
 
-    // Créer un objet JSON représentant l'identité
+    // Create a JSON object representing the identity
     const identity = {
       firstName,
       lastName,
       createdAt: new Date().toISOString(),
     };
 
-    //  Afficher l'identité en console
+    // Log the identity that will be stored
     console.log(' Identité à enregistrer :', identity);
 
+    // Initialize Hedera client and credentials
+    const MY_ACCOUNT_ID = AccountId.fromString(
+      process.env.MY_ACCOUNT_ID || '0.0.5829208',
+    );
+    const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA(
+      process.env.MY_PRIVATE_KEY ||
+        'b259583938dcb33fc2ec8d9b1385cf82ed8151e0084e1047405e5868c009cbca',
+    );
+
+    // Create a client connection to the Hedera network
+    const hederaClient = Client.forTestnet();
+    hederaClient.setOperator(MY_ACCOUNT_ID, MY_PRIVATE_KEY);
+
+    // Generate a supply key for the NFT
     const supplyKey = PrivateKey.generateED25519();
 
-    //  Créer le Token NFT
+    // Create the NFT Token
     const nftCreate = await new TokenCreateTransaction()
-      .setTokenName(`${firstName} ${lastName} Identity`) // probleme aucas du meme nom et prenom de l'utilisateur
+      .setTokenName(`${firstName} ${lastName} Identity`) // Note: This could cause issues with duplicate names
       .setTokenSymbol('IDNFT')
       .setTokenType(TokenType.NonFungibleUnique)
       .setDecimals(0)
       .setInitialSupply(0)
-      .setTreasuryAccountId(OPERATOR_ACCOUNT_ID)
+      .setTreasuryAccountId(MY_ACCOUNT_ID) // Using the operator account as treasury
       .setSupplyType(TokenSupplyType.Finite)
       .setMaxSupply(1)
       .setSupplyKey(supplyKey)
-      .freezeWith(client);
+      .freezeWith(hederaClient);
 
-    //Sign the transaction with the treasury key
-    const nftCreateTxSign = await nftCreate.sign(
-      PrivateKey.fromstring(OPERATOR_ACCOUNT_PRIVATE_KEY),
-    );
+    // Sign the transaction with the treasury key (operator key)
+    const nftCreateTxSign = await nftCreate.sign(MY_PRIVATE_KEY);
 
-    //Submit the transaction to a Hedera network
-    const nftCreateSubmit = await nftCreateTxSign.execute(client);
+    // Submit the transaction to a Hedera network
+    const nftCreateSubmit = await nftCreateTxSign.execute(hederaClient);
 
-    //Get the transaction receipt
-    const nftCreateRx = await nftCreateSubmit.getReceipt(client);
+    // Get the transaction receipt
+    const nftCreateRx = await nftCreateSubmit.getReceipt(hederaClient);
 
-    //Get the token ID
+    // Get the token ID
     const tokenId = nftCreateRx.tokenId;
 
-    //Log the token ID
-    console.log('Supply Key: ' + supplyKey);
-    //Log the token ID
+    // Log the token ID
     console.log('Created NFT with Token ID: ' + tokenId);
 
+    // Set max transaction fee
     const maxTransactionFee = new Hbar(30);
 
-    // const tokenSubmit = await tokenTx.execute(client);
-    // const tokenReceipt = await tokenSubmit.getReceipt(client);
-    // const tokenId = tokenReceipt.tokenId;
-
-    //  Convertir le JSON en buffer de metadata
+    // Convert the JSON identity to metadata buffer
     const metadataBuffer = Buffer.from(JSON.stringify(identity));
 
-    // Mint le NFT avec le metadata = données utilisateur
+    // Mint the NFT with metadata (user data)
     const mintTx = await new TokenMintTransaction()
       .setTokenId(tokenId)
       .setMetadata([metadataBuffer])
-      .freezeWith(client)
-      .signWithOperator(client);
+      .freezeWith(hederaClient);
 
-    const mintSubmit = await mintTx.execute(client);
-    const mintReceipt = await mintSubmit.getReceipt(client);
+    // Sign with supply key
+    const mintTxSigned = await mintTx.sign(supplyKey);
+
+    const mintSubmit = await mintTxSigned.execute(hederaClient);
+    const mintReceipt = await mintSubmit.getReceipt(hederaClient);
 
     console.log('✅ NFT minté :', mintReceipt.status.toString());
 

@@ -11,10 +11,13 @@ const {
 const createWallet = async (req, res) => {
   let client;
   try {
-    // Your account ID and private key from string value
-    const MY_ACCOUNT_ID = AccountId.fromString('0.0.5829208');
+    // Your account ID and private key from environment variables
+    const MY_ACCOUNT_ID = AccountId.fromString(
+      process.env.MY_ACCOUNT_ID || '0.0.5829208',
+    );
     const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA(
-      'b259583938dcb33fc2ec8d9b1385cf82ed8151e0084e1047405e5868c009cbca',
+      process.env.MY_PRIVATE_KEY ||
+        'b259583938dcb33fc2ec8d9b1385cf82ed8151e0084e1047405e5868c009cbca',
     );
 
     // Pre-configured client for test network (testnet)
@@ -22,12 +25,6 @@ const createWallet = async (req, res) => {
 
     //Set the operator with the account ID and private key
     client.setOperator(MY_ACCOUNT_ID, MY_PRIVATE_KEY);
-  } catch (error) {
-    console.error(error);
-  } finally {
-    if (client) client.close();
-  }
-  try {
     //  Génération d'une nouvelle paire de clés
     const accountPrivateKey = PrivateKey.generateECDSA();
     const accountPublicKey = accountPrivateKey.publicKey;
@@ -36,10 +33,14 @@ const createWallet = async (req, res) => {
     const txCreateAccount = new AccountCreateTransaction()
       // .setAlias(accountPublicKey.toEvmAddress()) // facultatif, utile pour des cas spécifiques
       .setKey(accountPublicKey)
-      .setInitialBalance(new Hbar(10));
+      .setInitialBalance(new Hbar(10))
+      .freezeWith(client); // Freeze the transaction before executing
 
-    //Sign the transaction with the client operator private key and submit to a Hedera network
-    const txCreateAccountResponse = await txCreateAccount.execute(client);
+    // Sign with the client operator private key that we defined above
+    const signedTx = await txCreateAccount.sign(MY_PRIVATE_KEY);
+
+    // Submit to a Hedera network
+    const txCreateAccountResponse = await signedTx.execute(client);
 
     //Request the receipt of the transaction
     const receiptCreateAccountTx =
