@@ -8,9 +8,91 @@ All API requests should be prefixed with: `http://localhost:5000/api`
 
 ## Authentication
 
-Currently, the APIs do not require authentication but use the system operator account configured in environment variables.
+The API uses JWT (JSON Web Token) authentication. To access protected endpoints, you need to:
+
+1. Register or log in to receive a JWT token
+2. Include the token in the Authorization header of your requests:
+   ```
+   Authorization: Bearer YOUR_JWT_TOKEN
+   ```
+
+All endpoints under `/api/identity/` are protected and require a valid JWT token.
 
 ## API Endpoints
+
+### Authentication
+
+#### Register a New User
+
+Registers a new user with the system and returns a JWT token.
+
+- **URL**: `/api/auth/signup`
+- **Method**: `POST`
+- **Request Body**:
+  ```json
+  {
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@example.com",
+    "phoneNumber": "+1234567890",
+    "password": "StrongP@ssw0rd"
+  }
+  ```
+- **Success Response**: `201 Created`
+  ```json
+  {
+    "email": "john.doe@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+  ```
+
+#### Login User
+
+Authenticates a user and returns a JWT token.
+
+- **URL**: `/api/auth/login`
+- **Method**: `POST`
+- **Request Body**:
+  ```json
+  {
+    "email": "john.doe@example.com",
+    "password": "StrongP@ssw0rd"
+  }
+  ```
+- **Success Response**: `200 OK`
+  ```json
+  {
+    "email": "john.doe@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+  ```
+
+#### Get User Profile
+
+Returns the current user's profile information.
+
+- **URL**: `/api/auth/profile`
+- **Method**: `GET`
+- **Headers**:
+  ```
+  Authorization: Bearer YOUR_JWT_TOKEN
+  ```
+- **Success Response**: `200 OK`
+  ```json
+  {
+    "_id": "60d21b4667d0d8992e610c85",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@example.com",
+    "phoneNumber": "+1234567890",
+    "createdAt": "2023-05-01T14:48:00.000Z",
+    "updatedAt": "2023-05-01T14:48:00.000Z"
+  }
+  ```
 
 ### Wallet and Account Management
 
@@ -225,58 +307,173 @@ Retrieves all identities stored in the database.
       "firstName": "John",
       "lastName": "Doe",
       "createdAt": "2023-05-01T14:48:00.000Z",
-      "tokenId": "0.0.789012",
-      "accountId": "0.0.123456"
+      "tokenId": "0.0.789012"
     }
+  ]
+  ```
+
+#### Get All Identities
+
+Retrieve all identities stored in the database with their complete information.
+
+- **URL**: `/identity`
+- **Method**: `GET`
+- **Headers**:
+  ```
+  Authorization: Bearer YOUR_JWT_TOKEN
+  ```
+- **Success Response**: `200 OK`
+  ```json
+  [
+    {
+      "_id": "680788a923c50df6b3766e42",
+      "firstName": "John",
+      "lastName": "Doe",
+      "dateOfBirth": "1990-01-15T00:00:00.000Z",
+      "gender": "male",
+      "phoneNumber": "+1234567890",
+      "idNumber": "AB123456789",
+      "idIssueDate": "2020-03-15T00:00:00.000Z",
+      "fingerprintNumber": "FP98765432",
+      "address": {
+        "street": "123 Main Street",
+        "city": "New York",
+        "state": "NY",
+        "postalCode": "10001",
+        "country": "USA"
+      },
+      "tokenId": "0.0.5891077",
+      "accountId": "0.0.5829208",
+      "createdAt": "2025-04-22T12:16:41.241Z",
+      "updatedAt": "2025-04-22T12:16:41.241Z"
+    }
+    // More identities...
   ]
   ```
 
 #### Get Identity by ID
 
-Retrieves a specific identity by its MongoDB ID.
+Retrieve a specific identity from the database by its MongoDB ID.
 
 - **URL**: `/identity/:id`
 - **Method**: `GET`
+- **Headers**:
+  ```
+  Authorization: Bearer YOUR_JWT_TOKEN
+  ```
 - **URL Parameters**:
-  - `id`: MongoDB ID of the identity
+  - `id`: MongoDB ID of the identity (e.g., `680788a923c50df6b3766e42`)
 - **Success Response**: `200 OK`
   ```json
   {
-    "_id": "60d21b4667d0d8992e610c85",
+    "_id": "680788a923c50df6b3766e42",
     "firstName": "John",
     "lastName": "Doe",
-    "createdAt": "2023-05-01T14:48:00.000Z",
-    "tokenId": "0.0.789012",
-    "accountId": "0.0.123456"
+    "dateOfBirth": "1990-01-15T00:00:00.000Z",
+    "gender": "male",
+    "phoneNumber": "+1234567890",
+    "idNumber": "AB123456789",
+    "idIssueDate": "2020-03-15T00:00:00.000Z",
+    "fingerprintNumber": "FP98765432",
+    "address": {
+      "street": "123 Main Street",
+      "city": "New York",
+      "state": "NY",
+      "postalCode": "10001",
+      "country": "USA"
+    },
+    "tokenId": "0.0.5891077",
+    "accountId": "0.0.5829208",
+    "createdAt": "2025-04-22T12:16:41.241Z",
+    "updatedAt": "2025-04-22T12:16:41.241Z"
+  }
+  ```
+- **Error Response**: `404 Not Found`
+  ```json
+  {
+    "error": "Identity not found"
   }
   ```
 
 #### Create Identity with NFT
 
-Creates a new identity in the database and mints an associated NFT.
+Creates a new identity in the database with extended personal information and mints an associated NFT.
 
 - **URL**: `/identity`
 - **Method**: `POST`
+- **Headers**:
+  ```
+  Authorization: Bearer YOUR_JWT_TOKEN
+  ```
 - **Request Body**:
   ```json
   {
     "firstName": "John",
-    "lastName": "Doe"
+    "lastName": "Doe",
+    "dateOfBirth": "1990-01-15",
+    "gender": "male",
+    "phoneNumber": "+1234567890",
+    "idNumber": "AB123456789",
+    "idIssueDate": "2020-03-15",
+    "fingerprintNumber": "FP98765432",
+    "street": "123 Main Street",
+    "city": "New York",
+    "state": "NY",
+    "postalCode": "10001",
+    "country": "USA"
   }
   ```
 - **Success Response**: `201 Created`
   ```json
   {
-    "message": "NFT identité créée et mintée avec succès",
+    "message": "Identity NFT created and minted successfully",
     "tokenId": "0.0.789012",
     "status": "SUCCESS",
+    "identityId": "60d21b4667d0d8992e610c85",
     "identity": {
+      "_id": "60d21b4667d0d8992e610c85",
       "firstName": "John",
       "lastName": "Doe",
-      "createdAt": "2023-05-01T14:48:00.000Z"
+      "dateOfBirth": "1990-01-15T00:00:00.000Z",
+      "gender": "male",
+      "phoneNumber": "+1234567890",
+      "idNumber": "AB123456789",
+      "idIssueDate": "2020-03-15T00:00:00.000Z",
+      "fingerprintNumber": "FP98765432",
+      "address": {
+        "street": "123 Main Street",
+        "city": "New York",
+        "state": "NY",
+        "postalCode": "10001",
+        "country": "USA"
+      },
+      "tokenId": "0.0.789012",
+      "accountId": "0.0.5829208",
+      "createdAt": "2023-05-01T14:48:00.000Z",
+      "updatedAt": "2023-05-01T14:48:00.000Z"
     }
   }
   ```
+- **Error Responses**:
+  - `400 Bad Request` - Missing required fields
+    ```json
+    {
+      "error": "All identity fields are required"
+    }
+    ```
+  - `409 Conflict` - Duplicate ID number
+    ```json
+    {
+      "message": "An identity with this ID number already exists",
+      "existingIdentity": {
+        "_id": "680788a923c50df6b3766e42",
+        "firstName": "John",
+        "lastName": "Doe",
+        "idNumber": "AB123456789",
+        "tokenId": "0.0.5891077"
+      }
+    }
+    ```
 
 #### Update Identity
 

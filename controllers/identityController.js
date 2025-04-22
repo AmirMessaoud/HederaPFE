@@ -48,17 +48,141 @@ const createIdentity = async (req, res) => {
 
 const createIdentityAndMintNFT = async (req, res) => {
   try {
-    const { firstName, lastName } = req.body;
+    const {
+      firstName,
+      lastName,
+      dateOfBirth,
+      gender,
+      phoneNumber,
+      idNumber,
+      idIssueDate,
+      fingerprintNumber,
+      street,
+      city,
+      state,
+      postalCode,
+      country,
+    } = req.body;
 
-    // Create a JSON object representing the identity
+    // Validate required fields
+    if (
+      !firstName ||
+      !lastName ||
+      !dateOfBirth ||
+      !gender ||
+      !phoneNumber ||
+      !idNumber ||
+      !idIssueDate ||
+      !fingerprintNumber ||
+      !street ||
+      !city ||
+      !state ||
+      !postalCode ||
+      !country
+    ) {
+      return res
+        .status(400)
+        .json({ error: 'All identity fields are required' });
+    }
+
+    // Create a JSON object representing the identity with all fields
     const identity = {
       firstName,
       lastName,
+      dateOfBirth,
+      gender,
+      phoneNumber,
+      idNumber,
+      idIssueDate,
+      fingerprintNumber,
+      address: {
+        street,
+        city,
+        state,
+        postalCode,
+        country,
+      },
       createdAt: new Date().toISOString(),
     };
 
     // Log the identity that will be stored
-    console.log(' Identité à enregistrer :', identity);
+    console.log('Identity to be registered:', identity);
+
+    // FIRST - Check if identity with this ID number already exists, otherwise save to MongoDB
+    let savedIdentity;
+    try {
+      // Parse dates from strings to Date objects
+      const parsedDateOfBirth = new Date(identity.dateOfBirth);
+      const parsedIdIssueDate = new Date(identity.idIssueDate);
+
+      // Check if an identity with this ID number already exists
+      const existingIdentity = await Identity.findOne({
+        idNumber: identity.idNumber,
+      });
+
+      if (existingIdentity) {
+        console.log(
+          'Identity with this ID number already exists:',
+          existingIdentity._id,
+        );
+        return res.status(409).json({
+          message: 'An identity with this ID number already exists',
+          existingIdentity: {
+            _id: existingIdentity._id,
+            firstName: existingIdentity.firstName,
+            lastName: existingIdentity.lastName,
+            idNumber: existingIdentity.idNumber,
+            tokenId: existingIdentity.tokenId,
+          },
+        });
+      }
+
+      // Create identity object with all fields to save in MongoDB
+      const newIdentity = new Identity({
+        firstName: identity.firstName,
+        lastName: identity.lastName,
+        dateOfBirth: parsedDateOfBirth,
+        gender: identity.gender,
+        phoneNumber: identity.phoneNumber,
+        idNumber: identity.idNumber,
+        idIssueDate: parsedIdIssueDate,
+        fingerprintNumber: identity.fingerprintNumber,
+        address: {
+          street: identity.address.street,
+          city: identity.address.city,
+          state: identity.address.state,
+          postalCode: identity.address.postalCode,
+          country: identity.address.country,
+        },
+        // We'll add tokenId later after minting
+      });
+
+      // Save to MongoDB first
+      savedIdentity = await newIdentity.save();
+      console.log('Identity saved to database with ID:', savedIdentity._id);
+    } catch (dbError) {
+      console.error('Error saving identity to database:', dbError);
+
+      // Check if this is a duplicate key error
+      if (
+        dbError.code === 11000 &&
+        dbError.keyPattern &&
+        dbError.keyPattern.idNumber
+      ) {
+        return res.status(409).json({
+          message: 'An identity with this ID number already exists',
+          error: 'Duplicate ID number',
+          idNumber: dbError.keyValue.idNumber,
+        });
+      }
+
+      return res.status(500).json({
+        message: 'Failed to save identity to database',
+        error: dbError.message,
+      });
+    }
+
+    // SECOND - Now that we have the MongoDB ID, proceed with NFT creation
 
     // Initialize Hedera client and credentials
     const MY_ACCOUNT_ID = AccountId.fromString(
@@ -78,7 +202,7 @@ const createIdentityAndMintNFT = async (req, res) => {
 
     // Create the NFT Token
     const nftCreate = await new TokenCreateTransaction()
-      .setTokenName(`${firstName} ${lastName} Identity`) // Note: This could cause issues with duplicate names
+      .setTokenName(`${firstName} ${lastName} Identity - ${savedIdentity._id}`)
       .setTokenSymbol('IDNFT')
       .setTokenType(TokenType.NonFungibleUnique)
       .setDecimals(0)
@@ -107,10 +231,21 @@ const createIdentityAndMintNFT = async (req, res) => {
     // Set max transaction fee
     const maxTransactionFee = new Hbar(30);
 
-    // Convert the JSON identity to metadata buffer
-    const metadataBuffer = Buffer.from(JSON.stringify(identity));
+    // Create minimal metadata that includes the MongoDB document ID
+    const minimalIdentityData = {
+      mongoDbId: savedIdentity._id.toString(), // Include the MongoDB document ID
+      idNumber: identity.idNumber,
+    };
 
-    // Mint the NFT with metadata (user data)
+    console.log(
+      'Using minimal metadata for NFT with MongoDB ID:',
+      minimalIdentityData,
+    );
+
+    // Convert the minimal identity reference to metadata buffer
+    const metadataBuffer = Buffer.from(JSON.stringify(minimalIdentityData));
+
+    // Mint the NFT with the MongoDB ID in metadata
     const mintTx = await new TokenMintTransaction()
       .setTokenId(tokenId)
       .setMetadata([metadataBuffer])
@@ -122,15 +257,36 @@ const createIdentityAndMintNFT = async (req, res) => {
     const mintSubmit = await mintTxSigned.execute(hederaClient);
     const mintReceipt = await mintSubmit.getReceipt(hederaClient);
 
-    console.log('✅ NFT minté :', mintReceipt.status.toString());
+    console.log('✅ NFT minted:', mintReceipt.status.toString());
 
-    //  Réponse au client
-    res.json({
-      message: 'NFT identité créée et mintée avec succès',
-      tokenId: tokenId.toString(),
-      status: mintReceipt.status.toString(),
-      identity: identity,
-    });
+    // Now update the MongoDB document with the token ID
+    try {
+      savedIdentity.tokenId = tokenId.toString();
+      savedIdentity.accountId = MY_ACCOUNT_ID.toString();
+      await savedIdentity.save();
+      console.log(
+        'MongoDB document updated with token ID:',
+        tokenId.toString(),
+      );
+
+      // Return success response to client
+      res.status(201).json({
+        message: 'Identity NFT created and minted successfully',
+        tokenId: tokenId.toString(),
+        status: mintReceipt.status.toString(),
+        identityId: savedIdentity._id,
+        identity: savedIdentity,
+      });
+    } catch (dbError) {
+      console.error('Error saving identity to database:', dbError);
+      // The NFT was created, but database save failed
+      res.status(500).json({
+        message: 'NFT created but failed to save identity to database',
+        error: dbError.message,
+        tokenId: tokenId.toString(),
+        status: mintReceipt.status.toString(),
+      });
+    }
   } catch (err) {
     console.error('❌ Erreur :', err);
     res.status(500).json({ error: err.message });
