@@ -112,6 +112,10 @@ const saveProfile = async (req, res) => {
     if (!socialInfo) console.log('Warning: socialInfo is missing');
 
     // Create empty objects for missing sections and extract fields when present
+    // Log personal info to debug avatar issue
+    console.log('Personal info received (for avatar debugging):', personalInfo);
+    console.log('Avatar URL received:', personalInfo?.profileImage);
+
     const cleanPersonalInfo =
       personalInfo ?
         {
@@ -120,6 +124,7 @@ const saveProfile = async (req, res) => {
           dateOfBirth: personalInfo.dateOfBirth || '',
           gender: personalInfo.gender || '',
           phoneNumber: personalInfo.phoneNumber || '',
+          // Ensure profileImage is properly extracted and not overwritten
           profileImage: personalInfo.profileImage || '',
         }
       : {};

@@ -11,9 +11,8 @@ const router = express.Router();
 // Protect all profile routes with authentication
 router.use(requireAuth);
 
-// NOTE: Profile saving is now handled by the NFT create-and-mint endpoint
-// to prevent duplicate saving operations and ensure consistent data
-// router.post('/save', saveProfile);
+// Re-enabling profile save endpoint to ensure avatars and profile updates are saved correctly
+router.post('/save', saveProfile);
 
 // Get profile by userId
 router.get('/:userId', getProfile);
