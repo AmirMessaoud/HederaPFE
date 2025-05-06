@@ -89,12 +89,10 @@ const associateToken = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: error.message || 'An error occurred during token association',
-      });
+    res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred during token association',
+    });
   } finally {
     if (client) client.close();
   }
@@ -146,12 +144,10 @@ const burnToken = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: error.message || 'An error occurred during token burn',
-      });
+    res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred during token burn',
+    });
   } finally {
     if (client) client.close();
   }
@@ -202,12 +198,10 @@ const deleteToken = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: error.message || 'An error occurred during token deletion',
-      });
+    res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred during token deletion',
+    });
   } finally {
     if (client) client.close();
   }
@@ -262,12 +256,10 @@ const dissociateToken = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: error.message || 'An error occurred during token dissociation',
-      });
+    res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred during token dissociation',
+    });
   } finally {
     if (client) client.close();
   }
@@ -322,12 +314,10 @@ const freezeAccount = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: error.message || 'An error occurred during account freeze',
-      });
+    res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred during account freeze',
+    });
   } finally {
     if (client) client.close();
   }
@@ -378,12 +368,10 @@ const pauseToken = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: error.message || 'An error occurred during token pause',
-      });
+    res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred during token pause',
+    });
   } finally {
     if (client) client.close();
   }
@@ -434,12 +422,10 @@ const unpauseToken = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: error.message || 'An error occurred during token unpause',
-      });
+    res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred during token unpause',
+    });
   } finally {
     if (client) client.close();
   }
@@ -494,12 +480,10 @@ const unfreezeAccount = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: error.message || 'An error occurred during account unfreeze',
-      });
+    res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred during account unfreeze',
+    });
   } finally {
     if (client) client.close();
   }
@@ -556,12 +540,10 @@ const wipeToken = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: error.message || 'An error occurred during token wipe',
-      });
+    res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred during token wipe',
+    });
   } finally {
     if (client) client.close();
   }

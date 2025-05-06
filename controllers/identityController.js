@@ -579,27 +579,3 @@ module.exports = {
   updateIdentity,
   deleteIdentity,
 };
-
-// le reste de fichier JSON
-// gender,
-// birthDate,
-// nationality,
-// address,
-// phoneNumber,
-// email,
-// IDNumber,
-
-// const tokenTx = await new TokenCreateTransaction()
-// .setTokenName(`${firstName} ${lastName} Identity`) // probleme aucas du meme nom et prenom de l'utilisateur
-// .setTokenSymbol('IDNFT')
-// .setTokenType(TokenType.NonFungibleUnique)
-// .setDecimals(0)
-// .setInitialSupply(0)
-// .setTreasuryAccountId(client.operatorAccountId)
-// .setSupplyType(TokenSupplyType.Finite)
-// .setMaxSupply(1)
-// .setSupplyKey(client.operatorPublicKey)
-// .setAdminKey(client.operatorPublicKey)
-// .setMaxTransactionFee(new Hbar(30))
-// .freezeWith(client)
-// .signWithOperator(client);

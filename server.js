@@ -11,12 +11,13 @@ const emailRoutes = require('./routes/emailRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const nftRoutes = require('./routes/nftRoutes');
+const hbarRoutes = require('./routes/hbarRoutes');
 
 // Import authentication middleware
 const requireAuth = require('./middleware/requireAuth');
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/hedera', {
+mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/hedera', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -59,6 +60,9 @@ app.use('/api/profiles', profileRoutes);
 
 // NFT routes - protected by requireAuth middleware
 app.use('/api/nft', requireAuth, nftRoutes);
+
+// HBAR transfer routes - protected by requireAuth middleware
+app.use('/api/hbar', requireAuth, hbarRoutes);
 
 // Debug endpoint for profile routes
 app.get('/api/test-profiles', (req, res) => {

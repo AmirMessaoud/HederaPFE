@@ -2,6 +2,7 @@ const express = require('express');
 const {
   createIdentityAndMintNFT,
 } = require('../controllers/identityController');
+const { createAndMintNFT } = require('../controllers/SCNFT1');
 const router = express.Router();
 
 // Debug middleware to check token
@@ -15,5 +16,8 @@ const debugAuth = (req, res, next) => {
 
 // Route to create identity and mint NFT
 router.post('/create-and-mint', debugAuth, createIdentityAndMintNFT);
+
+// Route to create, mint, and transfer NFT with category-specific metadata
+router.post('/create-and-mint-category', debugAuth, createAndMintNFT);
 
 module.exports = router;
