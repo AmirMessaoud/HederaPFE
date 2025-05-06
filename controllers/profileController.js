@@ -200,7 +200,7 @@ const saveProfile = async (req, res) => {
     if (tokenId) {
       profileData.nftInfo = {
         tokenId: tokenId.toString(),
-        accountId: req.body.nftData?.accountId || '0.0.5904951', // Use account ID from request or default
+        accountId: req.body.nftData?.accountId || '0.0.5925292', // Use account ID from request or default
         mintedAt: nftMintedAt,
         status: nftStatus,
       };

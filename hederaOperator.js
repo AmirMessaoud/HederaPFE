@@ -2,10 +2,8 @@ const { Client, PrivateKey, AccountId } = require('@hashgraph/sdk');
 require('dotenv').config();
 
 // Check if environment variables are set, use defaults if not (for development only)
-const OPERATOR_ACCOUNT_ID = process.env.OPERATOR_ACCOUNT_ID || '0.0.5829208';
-const OPERATOR_ACCOUNT_PRIVATE_KEY =
-  process.env.OPERATOR_ACCOUNT_PRIVATE_KEY ||
-  'b259583938dcb33fc2ec8d9b1385cf82ed8151e0084e1047405e5868c009cbca';
+const OPERATOR_ACCOUNT_ID = process.env.OPERATOR_ACCOUNT_ID;
+const OPERATOR_ACCOUNT_PRIVATE_KEY = process.env.OPERATOR_ACCOUNT_PRIVATE_KEY;
 
 // Create Hedera client objects with the values (either from .env or defaults)
 const operatorAccountId = AccountId.fromString(OPERATOR_ACCOUNT_ID);

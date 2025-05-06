@@ -31,7 +31,7 @@ const createIdWithNFT = async (req, res) => {
 
     // Your account ID and private key from environment variables
     const MY_ACCOUNT_ID = AccountId.fromString(
-      process.env.MY_ACCOUNT_ID || '0.0.5829208',
+      process.env.MY_ACCOUNT_ID || '0.0.5925292',
     );
     const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA(
       process.env.MY_PRIVATE_KEY ||

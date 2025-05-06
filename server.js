@@ -5,7 +5,7 @@ console.log(
   'Hedera Account ID from env:',
   process.env.MY_ACCOUNT_ID || 'Not set',
 );
-console.log('Using fallback ID if not set:', '0.0.5904951');
+console.log('Using fallback ID if not set:', '0.0.5925292');
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -18,6 +18,7 @@ const emailRoutes = require('./routes/emailRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const nftRoutes = require('./routes/nftRoutes');
+const certifRoutes = require('./routes/certifRoutes');
 
 const hbarRoutes = require('./routes/hbarRoutes');
 
@@ -71,6 +72,9 @@ app.use('/api/profiles', profileRoutes);
 
 // NFT routes - protected by requireAuth middleware
 app.use('/api/nft', requireAuth, nftRoutes);
+
+// Certificate routes - protected by requireAuth middleware
+app.use('/api/certif', requireAuth, certifRoutes);
 
 // HBAR transfer routes - protected by requireAuth middleware
 app.use('/api/hbar', requireAuth, hbarRoutes);
