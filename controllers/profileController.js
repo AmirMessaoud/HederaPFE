@@ -206,22 +206,57 @@ const saveProfile = async (req, res) => {
       };
     }
 
-    if (profile) {
+    // Handle both old and new address field names for backward compatibility
+    if (req.body.addressInfo) {
+      // If we have new field names, copy to old ones for backward compatibility
+      if (req.body.addressInfo.homeAddress !== undefined) {
+        req.body.addressInfo.streetAddress = req.body.addressInfo.homeAddress;
+      }
+      if (req.body.addressInfo.workAddress !== undefined) {
+        req.body.addressInfo.stateProvince = req.body.addressInfo.workAddress;
+      }
+
+      // If we have old field names but missing new ones, copy to new ones
+      if (
+        req.body.addressInfo.streetAddress !== undefined &&
+        req.body.addressInfo.homeAddress === undefined
+      ) {
+        req.body.addressInfo.homeAddress = req.body.addressInfo.streetAddress;
+      }
+      if (
+        req.body.addressInfo.stateProvince !== undefined &&
+        req.body.addressInfo.workAddress === undefined
+      ) {
+        req.body.addressInfo.workAddress = req.body.addressInfo.stateProvince;
+      }
+
+      console.log('Address field mapping complete:', req.body.addressInfo);
+    }
+
+    // Add or update the profile in the database
+    let updatedProfile;
+
+    // First check if this profile already exists
+    const existingProfile = await Profile.findOne({ userId: userId });
+
+    if (existingProfile) {
+      console.log('Found existing profile, updating:', existingProfile._id);
       // Update existing profile
-      profile = await Profile.findOneAndUpdate(
-        { userId },
-        { $set: profileData },
+      updatedProfile = await Profile.findOneAndUpdate(
+        { userId: userId },
+        req.body,
         { new: true },
       );
     } else {
+      console.log('Creating new profile for userId:', userId);
       // Create new profile
-      profile = await Profile.create(profileData);
+      updatedProfile = await Profile.create(req.body);
     }
 
     return res.status(200).json({
       success: true,
       message: 'Profile saved and NFT minted successfully',
-      profile,
+      profile: updatedProfile,
       nftInfo: {
         tokenId: tokenId ? tokenId.toString() : '',
         status: nftStatus || 'SUCCESS',
@@ -242,14 +277,13 @@ const getProfile = async (req, res) => {
   try {
     console.log('getProfile controller accessed');
     console.log('Request params:', req.params);
-    console.log('Request user:', req.user);
-
-    const { userId } = req.params;
+    const userId = req.params.userId;
+    console.log('Looking up profile for userId:', userId);
 
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: 'UserId is required',
+        message: 'userId is required to fetch profile',
       });
     }
 
@@ -262,15 +296,36 @@ const getProfile = async (req, res) => {
       });
     }
 
+    // Handle field mapping for address fields (old field names to new field names)
+    if (profile.addressInfo) {
+      // If the profile has old field names but missing new ones, map them
+      if (
+        profile.addressInfo.streetAddress &&
+        !profile.addressInfo.homeAddress
+      ) {
+        profile.addressInfo.homeAddress = profile.addressInfo.streetAddress;
+      }
+
+      if (
+        profile.addressInfo.stateProvince &&
+        !profile.addressInfo.workAddress
+      ) {
+        profile.addressInfo.workAddress = profile.addressInfo.stateProvince;
+      }
+
+      // We don't delete the old fields here since that would require saving back to the DB
+      // This is just a read-time transform
+    }
+
     return res.status(200).json({
       success: true,
       profile,
     });
   } catch (error) {
-    console.error('Error retrieving profile:', error);
+    console.error('Error fetching profile:', error);
     return res.status(500).json({
       success: false,
-      message: 'Server error',
+      message: 'Internal server error',
       error: error.message,
     });
   }

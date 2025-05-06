@@ -23,9 +23,9 @@ const profileSchema = new Schema(
       issueDate: Date,
     },
     addressInfo: {
-      streetAddress: String,
+      homeAddress: String,
+      workAddress: String,
       city: String,
-      stateProvince: String,
       postalCode: String,
       country: String,
     },

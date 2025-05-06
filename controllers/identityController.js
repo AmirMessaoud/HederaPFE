@@ -127,9 +127,9 @@ const createIdentityAndMintNFT = async (req, res) => {
       idNumber,
       idIssueDate,
       fingerprintNumber,
-      street,
+      homeAddress,
+      workAddress,
       city,
-      state,
       postalCode,
       country,
     } = req.body;
@@ -144,9 +144,9 @@ const createIdentityAndMintNFT = async (req, res) => {
       !idNumber ||
       !idIssueDate ||
       !fingerprintNumber ||
-      !street ||
+      !homeAddress ||
+      !workAddress ||
       !city ||
-      !state ||
       !postalCode ||
       !country
     ) {
@@ -166,9 +166,9 @@ const createIdentityAndMintNFT = async (req, res) => {
       idIssueDate,
       fingerprintNumber,
       address: {
-        street,
+        homeAddress,
+        workAddress,
         city,
-        state,
         postalCode,
         country,
       },
@@ -267,9 +267,9 @@ const createIdentityAndMintNFT = async (req, res) => {
         },
         // Address info
         addressInfo: {
-          streetAddress: identity.address.street,
+          homeAddress: identity.address.homeAddress,
+          workAddress: identity.address.workAddress,
           city: identity.address.city,
-          stateProvince: identity.address.state,
           postalCode: identity.address.postalCode,
           country: identity.address.country,
         },

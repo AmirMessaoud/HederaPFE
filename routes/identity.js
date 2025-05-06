@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const requireAuth = require('../middleware/requireAuth');
 
 // Import identity controller functions
 const {
@@ -9,9 +10,6 @@ const {
   updateIdentity,
   deleteIdentity,
 } = require('../controllers/identityController');
-
-// Import wallet creation function
-const { createWallet } = require('../controllers/createWallet');
 
 // Import NFT creation function
 const { mintNFT } = require('../controllers/createNft');
@@ -24,9 +22,8 @@ const { getAccountInfo } = require('../controllers/getInfoQuery');
 const { transferHbar } = require('../controllers/transferHbar');
 const { createIdWithNFT } = require('../controllers/idController');
 
-// WALLET ROUTES
-// Create wallet
-router.post('/wallet', createWallet);
+// Note: Wallet creation has been moved to walletRoutes.js
+// Please use /api/wallet/create for wallet creation
 
 // Create basic account
 router.post('/account', createAccount);

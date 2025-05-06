@@ -1,5 +1,12 @@
 require('dotenv').config();
 
+// Debug: Log environment variables at startup
+console.log(
+  'Hedera Account ID from env:',
+  process.env.MY_ACCOUNT_ID || 'Not set',
+);
+console.log('Using fallback ID if not set:', '0.0.5904951');
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -11,7 +18,11 @@ const emailRoutes = require('./routes/emailRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const nftRoutes = require('./routes/nftRoutes');
+
 const hbarRoutes = require('./routes/hbarRoutes');
+
+const updateRequestRoutes = require('./routes/updateRequestRoutes');
+const walletRoutes = require('./routes/walletRoutes');
 
 // Import authentication middleware
 const requireAuth = require('./middleware/requireAuth');
@@ -63,6 +74,12 @@ app.use('/api/nft', requireAuth, nftRoutes);
 
 // HBAR transfer routes - protected by requireAuth middleware
 app.use('/api/hbar', requireAuth, hbarRoutes);
+
+// Update request routes - protected by requireAuth middleware in route file
+app.use('/api/update-requests', updateRequestRoutes);
+
+// Wallet routes - all routes protected by requireAuth middleware
+app.use('/api/wallet', requireAuth, walletRoutes);
 
 // Debug endpoint for profile routes
 app.get('/api/test-profiles', (req, res) => {

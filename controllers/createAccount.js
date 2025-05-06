@@ -19,11 +19,11 @@ const createAccount = async (req, res) => {
   try {
     // Your account ID and private key from string value or environment variables
     const MY_ACCOUNT_ID = AccountId.fromString(
-      process.env.MY_ACCOUNT_ID || '0.0.5829208',
+      process.env.MY_ACCOUNT_ID || '0.0.5904951',
     );
     const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA(
       process.env.MY_PRIVATE_KEY ||
-        'b259583938dcb33fc2ec8d9b1385cf82ed8151e0084e1047405e5868c009cbca',
+        '0819f6f3684b368a4fe140ce154b76d7c32790c8277f4ea86ac800c5d85ac0b8',
     );
 
     // Pre-configured client for test network (testnet)

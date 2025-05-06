@@ -23,9 +23,12 @@ const mintNFT = async (req, res) => {
 
   try {
     // Hedera operator credentials
-    const MY_ACCOUNT_ID = AccountId.fromString(process.env.MY_ACCOUNT_ID);
+    const MY_ACCOUNT_ID = AccountId.fromString(
+      process.env.MY_ACCOUNT_ID || '0.0.5904951',
+    );
     const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA(
-      process.env.MY_PRIVATE_KEY,
+      process.env.MY_PRIVATE_KEY ||
+        '0819f6f3684b368a4fe140ce154b76d7c32790c8277f4ea86ac800c5d85ac0b8',
     );
 
     client = Client.forTestnet();
