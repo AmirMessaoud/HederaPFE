@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+
+// Controller imports
 const {
   createWallet,
   getWalletBalance,
@@ -11,11 +13,18 @@ const {
   getWalletNfts,
 } = require('../controllers/updateWalletNft');
 const { transferHbar } = require('../controllers/transferHbar');
+const { withdrawFunds } = require('../controllers/withdrawFunds');
+const { linkWallet } = require('../controllers/linkWallet');
+
+// Middleware imports
 const requireAuth = require('../middleware/requireAuth');
 require('dotenv').config();
 
 // Route to create a new wallet - protected by auth
 router.post('/create', requireAuth, createWallet);
+
+// Route to link a wallet to a user
+router.post('/link', requireAuth, linkWallet);
 
 // Route to get wallet by user ID (for current logged in user)
 router.get('/my-wallet', requireAuth, getWalletByUserId);
@@ -32,5 +41,8 @@ router.post('/transfer', requireAuth, transferHbar);
 // Routes for wallet-NFT integration
 router.post('/update-nft', requireAuth, updateWalletWithNft);
 router.get('/nfts/:userId', requireAuth, getWalletNfts);
+
+// Route for withdrawing HBAR to EVM address
+router.post('/withdraw', requireAuth, withdrawFunds);
 
 module.exports = router;
