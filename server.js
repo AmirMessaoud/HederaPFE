@@ -5,7 +5,6 @@ console.log(
   'Hedera Account ID from env:',
   process.env.MY_ACCOUNT_ID || 'Not set',
 );
-console.log('Using fallback ID if not set:', '0.0.5925292');
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -19,11 +18,11 @@ const messageRoutes = require('./routes/messageRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const nftRoutes = require('./routes/nftRoutes');
 const certifRoutes = require('./routes/certifRoutes');
-
+const certificatsDemandRoutes = require('./routes/certificatsDemandRoutes');
 const hbarRoutes = require('./routes/hbarRoutes');
-
 const updateRequestRoutes = require('./routes/updateRequestRoutes');
 const walletRoutes = require('./routes/walletRoutes');
+const searchRoutes = require('./routes/searchRoutes');
 
 // Import authentication middleware
 const requireAuth = require('./middleware/requireAuth');
@@ -43,8 +42,15 @@ db.once('open', () => {
 // Express app
 const app = express();
 
-// CORS middleware - simplified configuration
-app.use(cors());
+// CORS middleware with specific configuration for credentials
+app.use(
+  cors({
+    origin: 'http://localhost:3000', // Frontend origin
+    credentials: true, // Allow credentials (cookies, authorization headers)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }),
+);
 
 // Parse JSON request bodies
 app.use(express.json());
@@ -76,6 +82,9 @@ app.use('/api/nft', requireAuth, nftRoutes);
 // Certificate routes - protected by requireAuth middleware
 app.use('/api/certif', requireAuth, certifRoutes);
 
+// Certificate demand routes - protected by requireAuth middleware
+app.use('/api/certificate-demands', requireAuth, certificatsDemandRoutes);
+
 // HBAR transfer routes - protected by requireAuth middleware
 app.use('/api/hbar', requireAuth, hbarRoutes);
 
@@ -84,6 +93,9 @@ app.use('/api/update-requests', updateRequestRoutes);
 
 // Wallet routes - all routes protected by requireAuth middleware
 app.use('/api/wallet', requireAuth, walletRoutes);
+
+// Search routes - globally accessible
+app.use('/api/search', searchRoutes);
 
 // Debug endpoint for profile routes
 app.get('/api/test-profiles', (req, res) => {
