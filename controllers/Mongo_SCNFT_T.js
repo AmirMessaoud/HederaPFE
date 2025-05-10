@@ -15,7 +15,65 @@ const {
   TokenId,
 } = require('@hashgraph/sdk'); // v2.46.0
 
+const { MongoClient } = require('mongodb');
 require('dotenv').config();
+
+// Configuration MongoDB
+const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const dbName = process.env.DB_NAME || 'hedera';
+const userCollectionName = process.env.USER_COLLECTION || 'wallets';
+
+/**
+ * Récupère la clé privée depuis MongoDB pour un ID de compte donné
+ * @param {string} accountId - L'ID du compte Hedera (format: 0.0.XXXXX)
+ * @returns {Promise<PrivateKey>} - La clé privée associée à l'ID du compte
+ */
+async function getPrivateKeyFromAccountId(accountId) {
+  const mongoClient = new MongoClient(mongoUri);
+
+  try {
+    await mongoClient.connect();
+    console.log(`Connexion MongoDB établie pour la recherche de: ${accountId}`);
+
+    const db = mongoClient.db(dbName);
+    const usersCollection = db.collection(userCollectionName);
+
+    console.log(`Recherche de la clé privée pour le compte: ${accountId}`);
+    const user = await usersCollection.findOne({ accountId: accountId });
+
+    if (!user || !user.privateKey) {
+      console.warn(
+        `Clé privée introuvable pour l'accountId: ${accountId}, utilisation du fallback`,
+      );
+      // Fallback sur la clé de l'opérateur si la clé n'est pas trouvée
+      const operatorKey = process.env.OPERATOR_ACCOUNT_PRIVATE_KEY;
+      const cleanKey =
+        operatorKey.startsWith('0x') ? operatorKey.substring(2) : operatorKey;
+      return PrivateKey.fromStringECDSA(cleanKey);
+    }
+
+    console.log(`Clé privée trouvée dans MongoDB pour ${accountId}`);
+    // Vérifier si la clé privée a un préfixe 0x
+    const userKey =
+      user.privateKey.startsWith('0x') ?
+        user.privateKey.substring(2)
+      : user.privateKey;
+    return PrivateKey.fromStringECDSA(userKey);
+  } catch (error) {
+    console.error(
+      'Erreur lors de la récupération de la clé privée depuis MongoDB:',
+      error,
+    );
+    // Fallback sur la clé de l'opérateur en cas d'erreur
+    const operatorKey = process.env.OPERATOR_ACCOUNT_PRIVATE_KEY;
+    const cleanKey =
+      operatorKey.startsWith('0x') ? operatorKey.substring(2) : operatorKey;
+    return PrivateKey.fromStringECDSA(cleanKey);
+  } finally {
+    await mongoClient.close();
+    console.log('Connexion MongoDB fermée');
+  }
+}
 
 /**
  * Controller for creating and minting NFTs with different metadata based on category type
@@ -74,8 +132,7 @@ const createAndMintNFT = async (req, res) => {
       );
     }
 
-    // Your account ID and private key from environment variables or config
-    // In a production environment, these should be securely stored
+    // Configurer le compte opérateur
     const MY_ACCOUNT_ID = AccountId.fromString(
       process.env.OPERATOR_ACCOUNT_ID || '0.0.5925292',
     );
@@ -220,52 +277,46 @@ const createAndMintNFT = async (req, res) => {
     console.log(`User Account ID: ${userAccountId.toString()}`);
     console.log(`Institution Account ID: ${institutionAccountId.toString()}`);
 
-    // Récupération des clés privées depuis le fichier .env
+    // Récupérer les clés privées depuis MongoDB
     let userPrivateKey;
     let institutionPrivateKey;
 
-    // Chercher les clés privées pour le compte utilisateur
-    if (metadata.UserAccountId === process.env.ACCOUNT_0_ID) {
-      console.log('User correspond au compte ACCOUNT_0 dans le fichier .env');
-      userPrivateKey = PrivateKey.fromString(process.env.ACCOUNT_0_PRIVATE_KEY);
-    } else if (metadata.UserAccountId === process.env.ACCOUNT_1_ID) {
-      console.log('User correspond au compte ACCOUNT_1 dans le fichier .env');
-      userPrivateKey = PrivateKey.fromString(process.env.ACCOUNT_1_PRIVATE_KEY);
-    } else {
+    console.log(
+      `Récupération des clés privées depuis MongoDB pour: UserAccountId=${metadata.UserAccountId}`,
+    );
+    try {
+      userPrivateKey = await getPrivateKeyFromAccountId(metadata.UserAccountId);
       console.log(
-        'Aucune clé privée ne correspond au UserAccountId dans le fichier .env',
+        `Clé privée récupérée pour l'utilisateur ${metadata.UserAccountId} depuis MongoDB`,
+      );
+    } catch (error) {
+      console.error(
+        `Erreur lors de la récupération de la clé pour l'utilisateur depuis MongoDB: ${error.message}`,
       );
       console.log(
-        'Utilisation du compte opérateur comme fallback pour le user',
+        "Utilisation du compte opérateur comme fallback pour l'utilisateur",
       );
       userPrivateKey = MY_PRIVATE_KEY;
-      // Nous ne lançons pas d'erreur ici pour assurer la compatibilité arrière
     }
 
-    // Chercher les clés privées pour le compte institution
-    if (metadata.InstitutionAccountId === process.env.ACCOUNT_0_ID) {
+    console.log(
+      `Récupération des clés privées depuis MongoDB pour: InstitutionAccountId=${metadata.InstitutionAccountId}`,
+    );
+    try {
+      institutionPrivateKey = await getPrivateKeyFromAccountId(
+        metadata.InstitutionAccountId,
+      );
       console.log(
-        'Institution correspond au compte ACCOUNT_0 dans le fichier .env',
+        `Clé privée récupérée pour l'institution ${metadata.InstitutionAccountId} depuis MongoDB`,
       );
-      institutionPrivateKey = PrivateKey.fromString(
-        process.env.ACCOUNT_0_PRIVATE_KEY,
-      );
-    } else if (metadata.InstitutionAccountId === process.env.ACCOUNT_1_ID) {
-      console.log(
-        'Institution correspond au compte ACCOUNT_1 dans le fichier .env',
-      );
-      institutionPrivateKey = PrivateKey.fromString(
-        process.env.ACCOUNT_1_PRIVATE_KEY,
-      );
-    } else {
-      console.log(
-        'Aucune clé privée ne correspond à InstitutionAccountId dans le fichier .env',
+    } catch (error) {
+      console.error(
+        `Erreur lors de la récupération de la clé pour l'institution depuis MongoDB: ${error.message}`,
       );
       console.log(
         "Utilisation du compte opérateur comme fallback pour l'institution",
       );
       institutionPrivateKey = MY_PRIVATE_KEY;
-      // Nous ne lançons pas d'erreur ici pour assurer la compatibilité arrière
     }
 
     // Get the actual token ID in EVM/Solidity format
@@ -502,4 +553,5 @@ const createAndMintNFT = async (req, res) => {
 
 module.exports = {
   createAndMintNFT,
+  getPrivateKeyFromAccountId,
 };

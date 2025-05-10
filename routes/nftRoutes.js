@@ -7,6 +7,19 @@ const {
   createAndMintNFT: createCertifNFT,
 } = require('../controllers/SCNFTTEST');
 const {
+  createAndMintNFT: createPropertyTransaction,
+} = require('../controllers/SCNFT2');
+const {
+  createAndMintNFT: createDualNFTTransaction,
+} = require('../controllers/SCNFT3');
+const {
+  createAndMintNFT: createMongoNFTCertif,
+  getPrivateKeyFromAccountId,
+} = require('../controllers/Mongo_SCNFT_Certif');
+const {
+  createAndMintNFT: createMongoNFTT,
+} = require('../controllers/Mongo_SCNFT_T');
+const {
   saveNFTInfo,
   getNFTInfo,
   getAllNFTs,
@@ -33,6 +46,18 @@ router.post('/create', debugAuth, createAndMintNFT);
 
 // Route pour créer et minter un NFT de certificat
 router.post('/certif/create', debugAuth, createCertifNFT);
+
+// Route pour créer et minter des NFTs de transactions immobilières/véhicules (acheteur uniquement)
+router.post('/property/create', debugAuth, createPropertyTransaction);
+
+// Route pour créer et minter des NFTs de transactions immobilières/véhicules (acheteur ET vendeur)
+router.post('/property/create-dual', debugAuth, createDualNFTTransaction);
+
+// Route pour créer et minter des certificats en utilisant les clés de MongoDB
+router.post('/certif/create-mongo', debugAuth, createMongoNFTCertif);
+
+// Route pour créer et minter des NFTs de transaction en utilisant les clés de MongoDB
+router.post('/transaction/create-mongo', debugAuth, createMongoNFTT);
 
 // Route pour sauvegarder les informations d'un NFT dans MongoDB
 router.post('/info', debugAuth, saveNFTInfo);
