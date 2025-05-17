@@ -11,6 +11,9 @@ const {
   deleteIdentity,
 } = require('../controllers/identityController');
 
+// Import NFT update function
+const { updateNftData } = require('../controllers/idUpdate');
+
 // Import NFT creation function
 const { mintNFT } = require('../controllers/createNft');
 
@@ -62,5 +65,32 @@ router.patch('/:id', updateIdentity);
 
 // Delete identity
 router.delete('/:id', deleteIdentity);
+
+// Update NFT metadata (nouveau endpoint)
+router.post('/update-nft-metadata', updateNftData);
+
+// DEBUG: Vérifier un NFT spécifique par tokenId (endpoint temporaire pour tests)
+router.get('/debug/nft/:tokenId', async (req, res) => {
+  try {
+    const { tokenId } = req.params;
+    // Recherche dans la collection profiles par tokenId
+    const Profile = require('../models/profileModel');
+    const nft = await Profile.findOne({ 'nftInfo.tokenId': tokenId });
+
+    if (!nft) {
+      return res
+        .status(404)
+        .json({ message: 'NFT non trouvé dans la base de données' });
+    }
+
+    res.status(200).json({
+      message: 'NFT trouvé dans MongoDB',
+      nft: nft,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la recherche du NFT:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 module.exports = router;

@@ -2,6 +2,9 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
+// Admin tokens will start with this prefix
+const ADMIN_TOKEN_PREFIX = 'admin-';
+
 const requireAuth = async (req, res, next) => {
   console.log('🔒 Authorization middleware triggered');
   console.log('📋 Request headers:', JSON.stringify(req.headers));
@@ -20,7 +23,24 @@ const requireAuth = async (req, res, next) => {
     authorization.substring(0, 15) + '...',
   );
 
+  // Check if this is a raw admin token with no Bearer prefix
+  if (authorization.startsWith(ADMIN_TOKEN_PREFIX)) {
+    console.log('👑 Admin token detected (raw format)');
+    req.isAdmin = true;
+    req.adminToken = authorization;
+    return next();
+  }
+
+  // Extract token from Bearer format
   const token = authorization.split(' ')[1];
+
+  // Check if the extracted token is an admin token
+  if (token && token.startsWith(ADMIN_TOKEN_PREFIX)) {
+    console.log('👑 Admin token detected (Bearer format)');
+    req.isAdmin = true;
+    req.adminToken = token;
+    return next();
+  }
 
   if (!token) {
     console.log('❌ Token format invalid in authorization header');
@@ -28,7 +48,7 @@ const requireAuth = async (req, res, next) => {
   }
 
   try {
-    console.log('🔍 Attempting to verify token using JWT_SECRET');
+    console.log('🔍 Attempting to verify JWT token for regular user');
     console.log('JWT secret exists:', process.env.JWT_SECRET ? 'Yes' : 'No');
 
     // Verify token
@@ -49,6 +69,7 @@ const requireAuth = async (req, res, next) => {
 
     console.log('👤 User found:', user);
     req.user = user;
+    req.isAdmin = false; // explicitly mark as non-admin
     next();
   } catch (error) {
     console.log('🚫 Authentication error:', error.name, error.message);

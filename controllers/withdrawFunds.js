@@ -63,40 +63,50 @@ const withdrawFunds = async (req, res) => {
 
     console.log('✅ Request data validation passed');
 
-    // 2. Get the authenticated user's wallet
+    // 2. Get the authenticated user's wallet or check admin access
     console.log('\n✅ Step 2: Retrieving user data');
 
-    // Check if req.user exists (set by requireAuth middleware)
-    if (!req.user) {
+    // Define these variables in the outer scope
+    let userId;
+    let user;
+
+    // Check for admin token first (set by requireAuth middleware)
+    if (req.isAdmin === true) {
+      console.log('👑 Admin token detected, proceeding with admin privileges');
+      console.log('- Admin token:', req.adminToken);
+      // No user ID or user object for admin flow
+    }
+    // If not admin, check for regular user authentication
+    else if (!req.user) {
       console.log(
-        '❌ ERROR: No user in request object. Authentication middleware may have failed.',
+        '❌ ERROR: No user in request object and not admin. Authentication middleware may have failed.',
       );
       return res.status(401).json({
         success: false,
         message: 'Authentication required',
       });
+    } else {
+      // Regular user flow - get user info
+      userId = req.user._id;
+      console.log('- User ID from req.user:', userId);
+
+      // Verify the User model structure
+      console.log('- User model fields:', Object.keys(User.schema.paths));
+
+      // Find user to get email
+      console.log('- Looking up full user by ID:', userId);
+      user = await User.findById(userId);
+
+      if (!user) {
+        console.log('❌ ERROR: User not found with ID:', userId);
+        return res.status(404).json({
+          success: false,
+          message: 'User not found',
+        });
+      }
+
+      console.log('✅ Found user:', user.email);
     }
-
-    // Get user ID from authentication middleware
-    const userId = req.user._id;
-    console.log('- User ID from req.user:', userId);
-
-    // Verify the User model structure
-    console.log('- User model fields:', Object.keys(User.schema.paths));
-
-    // Find user to get email
-    console.log('- Looking up full user by ID:', userId);
-    const user = await User.findById(userId);
-
-    if (!user) {
-      console.log('❌ ERROR: User not found with ID:', userId);
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
-    console.log('✅ Found user:', user.email);
 
     // Verify the Wallet model structure
     console.log('\n✅ Step 3: Retrieving wallet data');
@@ -129,9 +139,8 @@ const withdrawFunds = async (req, res) => {
       });
     }
 
-    // Associate the wallet with the user if it's not already linked
-    // This will help future lookups
-    if (!wallet.user) {
+    // Associate the wallet with the user if it's not already linked (regular users only)
+    if (!wallet.user && req.isAdmin !== true && userId && user) {
       console.log('- Wallet found but not linked to user. Auto-linking now.');
       wallet.user = userId;
       wallet.email = user.email;

@@ -345,12 +345,12 @@ const createIdentityAndMintNFT = async (req, res) => {
     // You mentioned having 1100 HBAR in your account - use that account's ID and private key here
     const MY_ACCOUNT_ID = AccountId.fromString(
       // Replace '0.0.XXXXX' with your actual Hedera account ID
-      process.env.MY_ACCOUNT_ID || '0.0.5925292',
+      process.env.MY_ACCOUNT_ID || '0.0.5904951',
     );
     const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA(
       // Using your HEX encoded private key from your Hedera portal
       process.env.MY_PRIVATE_KEY ||
-        '25e86d45fb6ee708414f89e7b3a4588b9b6c5de994dce5d6762f3b0f7a369129', // Add your full private key here
+        '0819f6f3684b368a4fe140ce154b76d7c32790c8277f4ea86ac800c5d85ac0b8', // Add your full private key here
     );
 
     // Create a client connection to the Hedera network

@@ -47,6 +47,43 @@ router.post('/create', requireAuth, async (req, res) => {
 
     await certificatDemand.save();
 
+    // Emit real-time event to admins (assume io is available globally or attach to req.app)
+    if (type === 'academic') {
+      if (req.app && req.app.get('io')) {
+        console.log(
+          '[SOCKET.IO] Emitting new_academic_certificate to admin-room:',
+          certificatDemand._id,
+        );
+        req.app
+          .get('io')
+          .to('admin-room')
+          .emit('new_academic_certificate', certificatDemand);
+      } else if (global.io) {
+        console.log(
+          '[SOCKET.IO] Emitting new_academic_certificate to ALL:',
+          certificatDemand._id,
+        );
+        global.io.emit('new_academic_certificate', certificatDemand);
+      }
+    } else {
+      if (req.app && req.app.get('io')) {
+        console.log(
+          '[SOCKET.IO] Emitting new_property_certificate to admin-room:',
+          certificatDemand._id,
+        );
+        req.app
+          .get('io')
+          .to('admin-room')
+          .emit('new_property_certificate', certificatDemand);
+      } else if (global.io) {
+        console.log(
+          '[SOCKET.IO] Emitting new_property_certificate to ALL:',
+          certificatDemand._id,
+        );
+        global.io.emit('new_property_certificate', certificatDemand);
+      }
+    }
+
     res.status(201).json({
       success: true,
       message:

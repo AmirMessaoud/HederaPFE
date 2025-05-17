@@ -21,7 +21,7 @@
 //   let client;
 //   try {
 //     // Your account ID and private key from string value
-//     const MY_ACCOUNT_ID = AccountId.fromString('0.0.5925292');
+//     const MY_ACCOUNT_ID = AccountId.fromString('0.0.5904951');
 //     const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA(
 //       'b259583938dcb33fc2ec8d9b1385cf82ed8151e0084e1047405e5868c009cbca',
 //     );

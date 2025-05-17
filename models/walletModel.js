@@ -2,10 +2,17 @@ const mongoose = require('mongoose');
 
 const walletSchema = new mongoose.Schema({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    // Using Schema.Types.Mixed to allow both ObjectId (for regular users) and String (for admin)
+    type: mongoose.Schema.Types.Mixed,
     required: true,
     index: true,
+    // Custom validator to ensure userId is either ObjectId or 'admin' string
+    validate: {
+      validator: function (value) {
+        return mongoose.Types.ObjectId.isValid(value) || value === 'admin';
+      },
+      message: 'userId must be either a valid ObjectId or the string "admin"',
+    },
   },
   accountId: {
     type: String,
@@ -32,7 +39,14 @@ const walletSchema = new mongoose.Schema({
     {
       type: {
         type: String,
-        enum: ['send', 'receive', 'mint', 'burn'],
+        enum: [
+          'send',
+          'receive',
+          'mint',
+          'burn',
+          'transaction_fee',
+          'platform_fee',
+        ],
         required: true,
       },
       amount: {

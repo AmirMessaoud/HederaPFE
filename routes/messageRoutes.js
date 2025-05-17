@@ -24,8 +24,8 @@ router.post('/contact', async (req, res) => {
   }
 });
 
-// Get all messages (optional - for admin purposes)
-router.get('/allmessages', async (req, res) => {
+// Get all messages (admin view) - sorted by date descending
+router.get('/', async (req, res) => {
   try {
     const messages = await Message.find().sort({ date: -1 });
     res.status(200).json(messages);

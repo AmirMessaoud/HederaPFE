@@ -104,6 +104,42 @@ const saveProfile = async (req, res) => {
       });
     }
 
+    // Check for uniqueness of ID number and fingerprint if provided
+    if (identityInfo && identityInfo.idNumber) {
+      const existingIdNumber = await Profile.findOne({
+        'identityInfo.idNumber': identityInfo.idNumber,
+        userId: { $ne: userId }, // Exclude current user to allow updates
+      });
+
+      if (existingIdNumber) {
+        console.error('ID Number already exists');
+        return res.status(409).json({
+          success: false,
+          message: 'This ID number is already registered in our system',
+          field: 'idNumber',
+          type: 'uniqueness_violation',
+        });
+      }
+    }
+
+    if (identityInfo && identityInfo.FingerprintNumber) {
+      const existingFingerprint = await Profile.findOne({
+        'identityInfo.FingerprintNumber': identityInfo.FingerprintNumber,
+        userId: { $ne: userId }, // Exclude current user to allow updates
+      });
+
+      if (existingFingerprint) {
+        console.error('Fingerprint number already exists');
+        return res.status(409).json({
+          success: false,
+          message:
+            'This fingerprint number is already registered in our system',
+          field: 'FingerprintNumber',
+          type: 'uniqueness_violation',
+        });
+      }
+    }
+
     // Use empty objects for any missing sections
     const emptyObj = {};
     if (!personalInfo) console.log('Warning: personalInfo is missing');
@@ -200,7 +236,7 @@ const saveProfile = async (req, res) => {
     if (tokenId) {
       profileData.nftInfo = {
         tokenId: tokenId.toString(),
-        accountId: req.body.nftData?.accountId || '0.0.5925292', // Use account ID from request or default
+        accountId: req.body.nftData?.accountId || '0.0.5904951', // Use account ID from request or default
         mintedAt: nftMintedAt,
         status: nftStatus,
       };

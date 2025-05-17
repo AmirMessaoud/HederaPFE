@@ -37,8 +37,8 @@ Associates a token with an account.
   "success": true,
   "data": {
     "status": "SUCCESS",
-    "transactionId": "0.0.5925292@1587635821.776568892",
-    "hashscanUrl": "https://hashscan.io/testnet/tx/0.0.5925292@1587635821.776568892"
+    "transactionId": "0.0.5904951@1587635821.776568892",
+    "hashscanUrl": "https://hashscan.io/testnet/tx/0.0.5904951@1587635821.776568892"
   }
 }
 ```
@@ -347,7 +347,7 @@ Combine plusieurs opérations en une seule requête : déploiement du contrat, c
     "contractId": "0.0.12345",
     "tokenId": "0.0.56789",
     "creator": {
-      "accountId": "0.0.5925292",
+      "accountId": "0.0.5904951",
       "nftSerial": "1"
     },
     "receiver": {

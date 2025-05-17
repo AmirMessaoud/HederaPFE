@@ -83,7 +83,7 @@ const createAndMintNFT = async (req, res) => {
     // Your account ID and private key from environment variables or config
     // In a production environment, these should be securely stored
     const MY_ACCOUNT_ID = AccountId.fromString(
-      process.env.MY_ACCOUNT_ID || '0.0.5925292',
+      process.env.MY_ACCOUNT_ID || '0.0.5904951',
     );
     const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA(
       process.env.MY_PRIVATE_KEY ||

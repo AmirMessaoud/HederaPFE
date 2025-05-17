@@ -14,7 +14,7 @@ require('dotenv').config();
 // Create a client connection
 const getClient = () => {
   const myAccountId =
-    process.env.MY_ACCOUNT_ID || AccountId.fromString('0.0.5925292');
+    process.env.MY_ACCOUNT_ID || AccountId.fromString('0.0.5904951');
   const myPrivateKey =
     process.env.MY_PRIVATE_KEY ||
     PrivateKey.fromStringECDSA(

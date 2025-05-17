@@ -17,10 +17,20 @@ const profileSchema = new Schema(
       profileImage: String,
     },
     identityInfo: {
-      idNumber: String,
+      idNumber: {
+        type: String,
+        unique: true,
+        sparse: true, // Allows null values and only enforces uniqueness for non-null values
+      },
       expiryDate: Date,
-      FingerprintNumber: String,
+      FingerprintNumber: {
+        type: String,
+        unique: true,
+        sparse: true, // Allows null values and only enforces uniqueness for non-null values
+      },
       issueDate: Date,
+      idCardFrontImage: String, // Base64 encoded image for ID card front
+      idCardBackImage: String, // Base64 encoded image for ID card back
     },
     addressInfo: {
       homeAddress: String,
